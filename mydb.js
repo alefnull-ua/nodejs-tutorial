@@ -36,41 +36,8 @@ function locationPredicate(location, entry) {
             location === entry.location);
 }
 
-function findByIdPredicate(eventId, entry) {
-    return entry.id === eventId
-}
 
 module.exports = {
     filename: filename,
-    header: header,
-
-    getAll : (location) => {
-        console.log('Getting all for location ', location);
-        return predicatedContent((row) => locationPredicate(location, row))},
-    getById : (eventId) => {
-        return predicatedContent((row) => findByIdPredicate( eventId, row)[0])},
-    delete: (eventId) => {
-        let found = predicatedContent((row) => findByIdPredicate( eventId, row)[0])
-        if (found) {
-            writeContent( predicatedContent((row) => !findByIdPredicate( eventId, row) ))
-            renameFile();
-        }
-        return found
-    },
-    create: (eventObj) => {
-        let found = predicatedContent((row) => findByIdPredicate(eventObj.id, row)[0]);
-        if (found) return false; // bad parameters
-        writeContent( readContent() + eventObj )
-        renameFile();
-        return true; // success
-    },
-    replace: (id, eventObj) => {
-        let found = predicatedContent((row) => findByIdPredicate(eventObj.id, row)[0]);
-        if (!found) return false; //bad parameters
-        writeContent(
-            predicatedContent((row) => !findByIdPredicate(id, row) ) + eventObj
-        )
-        return true
-    },
-    streamAll: () => { return fs.createReadStream(filename) } // and put it to response
+    header: header
 }

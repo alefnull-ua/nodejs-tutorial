@@ -32,7 +32,6 @@ function byLocation(location, entry) {
             location === entry.location);
 }
 
-// Create PUT /events/:eventId endpoint for replacing specific event data in csv file.
 
 // Create GET /events-batch endpoint which returns all events in json format via streaming directly from csv file.
 app.get('/events-batch', function(req, res) {
@@ -109,13 +108,38 @@ app.delete('/events/:eventId', function(req, res) {
     // db.delete(req.params.eventId) ? res.sendStatus(200) : res.sendStatus(404) })
     const eventId = req.params.eventId;
     if (eventId === undefined) {res.sendStatus(400); res.end("specify existing id")}
-    // if (findExisting(eventId) === undefined) { res.status(404); res.end("specify existing id"); return }
+    let outputFileDescr = fs.openSync('combined.csv', 'w')
+    fs.writeFileSync(outputFileDescr, db.header.join(",") + "\n")
+    parsedContent()
+      .on('data', function(csvrow) {
+          if (csvrow.id !== eventId) fs.writeFileSync(outputFileDescr, csvRow(csvrow) + "\n")
+        })
+      .on('end', function() { 
+          fs.closeSync(outputFileDescr);
+          fs.rename('combined.csv', db.filename, () => {});
+          res.sendStatus(200)
+        })
 })
-/*
-    .post(   function(req, res) { db.create(req.query) ? res.sendStatus(201) : res.sendStatus(400) });
 
-    .put(    function(req, res) { db.replace(req.params.eventId, req.query) ? res.sendStatus(201) : res.sendStatus(404) })
-*/
+// Create PUT /events/:eventId endpoint for replacing specific event data in csv file.
+app.put('/events/:eventId', function(req, res) { 
+    const eventId = req.params.eventId;
+    if (eventId === undefined) {res.sendStatus(400); res.end("specify existing id")}
+    const entry = validateFrom(req.body);
+    if (entry === undefined) { res.sendStatus(400); return }
+    let outputFileDescr = fs.openSync('combined.csv', 'w')
+    fs.writeFileSync(outputFileDescr, db.header.join(",") + "\n")
+    parsedContent()
+      .on('data', function(csvrow) {
+          if (csvrow.id === eventId) fs.writeFileSync(outputFileDescr, csvRow(entry) + "\n")
+        })
+      .on('end', function() { 
+          fs.closeSync(outputFileDescr);
+          fs.rename('combined.csv', db.filename, () => {});
+          res.sendStatus(200)
+        })
+})
+
 
 app.listen(port, () => {
   console.log(`Calendar listening at http://localhost:${port}`)
