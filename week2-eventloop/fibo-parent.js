@@ -6,12 +6,11 @@ const http = require('http');
 const url = require('url');
 
 const cp = require('child_process');
-const parentChannel = cp.fork(`./fibo-child.js`);
-
   
 http.createServer((req, res) => {
 // inspired by https://nodejs.org/en/knowledge/HTTP/clients/how-to-access-query-string-parameters/
     const queryObject = url.parse(req.url,true).query;
+    const parentChannel = cp.fork(`./fibo-child.js`);
 
     parentChannel.on('message', (m) => {
         console.log('PARENT got message:', m);
@@ -34,6 +33,22 @@ http.createServer((req, res) => {
 // Fibonacci for 8 has value the worker calculated 34
 // Fibonacci for 9 has value the worker calculated 55
 // Fibonacci for 10 has value the worker calculated 89
+
+
+// ab -c 5 -n 5 http://localhost:8000/?n=40
+// Time per request:       686.873 [ms] (mean, across all concurrent requests)
+
+// CHILD calculating fibonacci number number:  40
+// PARENT got message: { result: 165580141 }
+// CHILD calculating fibonacci number number:  40
+// CHILD calculating fibonacci number number:  40
+// CHILD calculating fibonacci number number:  40
+// CHILD calculating fibonacci number number:  40
+// PARENT got message: { result: 165580141 }
+// PARENT got message: { result: 165580141 }
+// PARENT got message: { result: 165580141 }
+// PARENT got message: { result: 165580141 }
+
 
 /*
 // logs say there's a memory leak!
